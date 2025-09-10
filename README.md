@@ -77,7 +77,7 @@ All problems are based on real interview questions from top tech companies like 
 ### Docker Setup (Recommended)
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/Purushottamnardewad/CodeForge.git
 cd CodeForge
 
 # Start all services with Docker Compose
@@ -143,31 +143,6 @@ docker-compose up --build
    docker-compose logs -f [frontend|backend|mongodb]
    ```
 
-## Project Structure
-
-```
-CodeForge/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # Database configuration
-│   │   ├── middleware/     # Express middleware
-│   │   ├── models/         # MongoDB schemas
-│   │   ├── routes/         # API routes
-│   │   ├── utils/          # Utilities and helpers
-│   │   └── server.ts       # Express server
-│   ├── package.json
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── contexts/       # React contexts
-│   │   ├── pages/          # Page components
-│   │   └── App.jsx         # Main app component
-│   ├── package.json
-│   └── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
 
 ## Default Credentials
 
