@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: codeforge-db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secretpassword
+      MONGO_INITDB_DATABASE: codeforge
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - codeforge-network
+    ports:
+      - "27017:27017"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: codeforge-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:secretpassword@mongodb:27017/codeforge?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      PORT: 5000
+      FRONTEND_URL: http://localhost
+    depends_on:
+      - mongodb
+    networks:
+      - codeforge-network
+    ports:
+      - "3001:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: codeforge-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - codeforge-network
+    ports:
+      - "80:80"
+
+volumes:
+  mongodb_data:
+
+networks:
+  codeforge-network:
+    driver: bridge
