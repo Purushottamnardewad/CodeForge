@@ -8,10 +8,12 @@ import Register from './pages/Register';
 import Problems from './pages/Problems';
 import ProblemDetail from './pages/ProblemDetail';
 import PrivateRoute from './components/PrivateRoute';
+import DebugInfo from './components/DebugInfo';
 
 function App() {
   return (
     <AuthProvider>
+      <DebugInfo />
       <Router>
         <Toaster 
           position="top-right"
