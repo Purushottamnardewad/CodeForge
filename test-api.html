@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CodeForge API Test</title>
+</head>
+<body>
+    <h1>CodeForge API Connection Test</h1>
+    
+    <div>
+        <h2>Backend Health Check</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <pre id="health-result"></pre>
+    </div>
+    
+    <div>
+        <h2>Registration Test</h2>
+        <button onclick="testRegistration()">Test Registration</button>
+        <pre id="registration-result"></pre>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://codeforge-production-c64c.up.railway.app/api';
+        
+        async function testHealth() {
+            const resultEl = document.getElementById('health-result');
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                resultEl.style.color = 'green';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+                resultEl.style.color = 'red';
+            }
+        }
+        
+        async function testRegistration() {
+            const resultEl = document.getElementById('registration-result');
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: `testuser${Date.now()}`,
+                        email: `test${Date.now()}@example.com`,
+                        password: 'password123'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                resultEl.style.color = 'green';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+                resultEl.style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>
