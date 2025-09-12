@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../config/api.js';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 import CodeEditor from '../components/CodeEditor';
@@ -22,13 +22,11 @@ const ProblemDetail = () => {
 
   const fetchProblem = async () => {
     try {
-      const response = await axios.get(`/api/problems/${id}`);
+      const response = await axios.get(`/problems/${id}`);
       setProblem(response.data);
-      setCode(response.data.starterCode.javascript);
     } catch (error) {
       console.error('Error fetching problem:', error);
       toast.error('Failed to load problem');
-      navigate('/problems');
     } finally {
       setLoading(false);
     }
@@ -44,12 +42,10 @@ const ProblemDetail = () => {
     setTestResults(null);
 
     try {
-      const response = await axios.post(`/api/execute/${id}`, {
+      const response = await axios.post(`/execute/${id}`, {
         code,
-        language: 'javascript'
-      });
-      
-      setTestResults(response.data);
+        language
+      });      setTestResults(response.data);
       
       if (response.data.passed === response.data.totalCases) {
         toast.success('All test cases passed! 🎉');
