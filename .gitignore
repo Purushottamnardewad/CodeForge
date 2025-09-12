@@ -10,7 +10,6 @@ yarn.lock
 # Production builds
 /frontend/dist
 /frontend/build
-/backend/dist
 
 # Environment variables
 .env

@@ -4,9 +4,8 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "rm -rf dist && npx tsc",
-    "start": "npx ts-node src/server.ts",
-    "start:prod": "node dist/server.js",
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/server.js",
     "seed": "ts-node src/utils/seed.ts"
   },
   "dependencies": {
@@ -19,16 +18,16 @@
     "vm2": "^3.9.19",
     "express-rate-limit": "^6.10.0",
     "helmet": "^7.0.0",
-    "express-validator": "^7.0.1",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {
     "typescript": "^5.1.6",
     "@types/express": "^4.17.17",
     "@types/node": "^20.5.0",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/cors": "^2.8.13",
-    "ts-node": "^10.9.1"
-  },
-  "devDependencies": {
+    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0"
   }
 }
