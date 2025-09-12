@@ -16,12 +16,12 @@ A comprehensive microservices-based online coding interview platform built with 
 
 ## Problem Categories & Distribution
 
-### ** 24 Total Problems:**
+### 24 Total Problems:
 - **Easy**: 15 problems (62%) - Perfect for beginners
 - **Medium**: 7 problems (29%) - Intermediate challenges  
 - **Hard**: 2 problems (9%) - Advanced algorithmic problems
 
-### ** Algorithm Categories:**
+### Algorithm Categories:
 
 | Category | Count | Examples |
 |----------|-------|----------|
@@ -37,7 +37,7 @@ A comprehensive microservices-based online coding interview platform built with 
 | **Graph** | 1 | Number of Islands |
 | **Sorting** | 1 | Merge Sorted Array |
 
-### ** Featured Hard Problems:**
+### Featured Hard Problems:
 - **Median of Two Sorted Arrays** - Classic binary search optimization
 - **Trapping Rain Water** - Advanced array manipulation with multiple solution approaches
 
@@ -662,4 +662,4 @@ CodeForge is now fully configured and ready to run! The project provides a compl
 - **Docker Deployment**: Complete containerization with Docker Compose
 - **Production Ready**: Security middleware, rate limiting, error handling
 
-The architecture is designed to be **scalable**, **maintainable**, **extensible**, and **secure**.
+The architecture is designed to be **scalable**, **maintainable**, **extensible** and **secure**.
