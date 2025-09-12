@@ -19,7 +19,7 @@ const Layout = () => {
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
                 <span className="text-xl font-bold text-primary-600">
-                  CodeInterview
+                  CodeForge
                 </span>
               </Link>
               {isAuthenticated && (
