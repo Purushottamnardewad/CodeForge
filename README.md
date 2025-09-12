@@ -662,4 +662,4 @@ CodeForge is now fully configured and ready to run! The project provides a compl
 - **Docker Deployment**: Complete containerization with Docker Compose
 - **Production Ready**: Security middleware, rate limiting, error handling
 
-The architecture is designed to be **scalable**, **maintainable**, **extensible**, and **secure**.
+The architecture is designed to be **scalable**, **maintainable**, **extensible** and **secure**.
