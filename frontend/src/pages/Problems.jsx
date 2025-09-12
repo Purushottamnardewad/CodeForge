@@ -25,19 +25,23 @@ const Problems = () => {
 
   const filteredProblems = filter === 'all' 
     ? problems 
-    : problems.filter(p => p.difficulty === filter);
+    : problems.filter(p => p.difficulty === filter.toLowerCase());
 
   const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Easy':
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
         return 'text-green-600 bg-green-100';
-      case 'Medium':
+      case 'medium':
         return 'text-yellow-600 bg-yellow-100';
-      case 'Hard':
+      case 'hard':
         return 'text-red-600 bg-red-100';
       default:
         return 'text-gray-600 bg-gray-100';
     }
+  };
+
+  const capitalizeDifficulty = (difficulty) => {
+    return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
   };
 
   if (loading) {
@@ -129,7 +133,7 @@ const Problems = () => {
                         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                         getDifficultyColor(problem.difficulty)
                       )}>
-                        {problem.difficulty}
+                        {capitalizeDifficulty(problem.difficulty)}
                       </span>
                     </div>
                   </div>

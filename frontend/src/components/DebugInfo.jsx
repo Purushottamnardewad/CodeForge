@@ -4,6 +4,11 @@ const DebugInfo = () => {
   const apiUrl = import.meta.env.VITE_API_BASE_URL || 'NOT_SET';
   const appName = import.meta.env.VITE_APP_NAME || 'NOT_SET';
   
+  // Only show debug info in development mode
+  if (import.meta.env.MODE === 'production') {
+    return null;
+  }
+  
   return (
     <div style={{ 
       position: 'fixed', 

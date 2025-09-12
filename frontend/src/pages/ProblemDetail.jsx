@@ -16,6 +16,72 @@ const ProblemDetail = () => {
   const [testResults, setTestResults] = useState(null);
   const [activeTab, setActiveTab] = useState('description');
 
+  const generateDefaultStarterCode = (title) => {
+    // Generate function name from title
+    const funcName = title
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9\s]/g, '')
+      .split(' ')
+      .map((word, index) => index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+      .join('');
+
+    // Generate starter template based on problem type
+    if (title.includes('Two Sum') || title.includes('Array')) {
+      return `/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+function ${funcName}(nums, target) {
+    // Your code here
+    return [];
+}`;
+    } else if (title.includes('Tree')) {
+      return `/**
+ * Definition for a binary tree node.
+ * function TreeNode(val, left, right) {
+ *     this.val = (val===undefined ? 0 : val)
+ *     this.left = (left===undefined ? null : left)
+ *     this.right = (right===undefined ? null : right)
+ * }
+ */
+/**
+ * @param {TreeNode} root
+ * @return {number}
+ */
+function ${funcName}(root) {
+    // Your code here
+    return 0;
+}`;
+    } else if (title.includes('String') || title.includes('Palindrome') || title.includes('Valid')) {
+      return `/**
+ * @param {string} s
+ * @return {boolean}
+ */
+function ${funcName}(s) {
+    // Your code here
+    return false;
+}`;
+    } else if (title.includes('Number') || title.includes('Integer')) {
+      return `/**
+ * @param {number} x
+ * @return {number}
+ */
+function ${funcName}(x) {
+    // Your code here
+    return 0;
+}`;
+    } else {
+      return `/**
+ * Write your solution here
+ */
+function ${funcName}(input) {
+    // Your code here
+    return result;
+}`;
+    }
+  };
+
   useEffect(() => {
     fetchProblem();
   }, [id]);
@@ -23,7 +89,12 @@ const ProblemDetail = () => {
   const fetchProblem = async () => {
     try {
       const response = await axios.get(`/problems/${id}`);
-      setProblem(response.data);
+      const problemData = response.data;
+      setProblem(problemData);
+      
+      // Set initial starter code
+      const starterCode = problemData.starterCode?.javascript || generateDefaultStarterCode(problemData.title);
+      setCode(starterCode);
     } catch (error) {
       console.error('Error fetching problem:', error);
       toast.error('Failed to load problem');
@@ -62,7 +133,8 @@ const ProblemDetail = () => {
 
   const handleReset = () => {
     if (problem) {
-      setCode(problem.starterCode.javascript);
+      const starterCode = problem.starterCode?.javascript || generateDefaultStarterCode(problem.title);
+      setCode(starterCode);
       setTestResults(null);
       toast.success('Code reset to starter template');
     }
