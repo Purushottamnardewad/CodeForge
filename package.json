@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "CodeForge - Microservices-based online coding interview platform",
   "scripts": {
-    "start": "cd backend && npm start",
+    "start": "node backend/dist/server.js",
     "build": "cd frontend && npm install && npm run build",
     "install:all": "npm run install:backend && npm run install:frontend",
     "install:backend": "cd backend && npm install",
@@ -23,6 +23,18 @@
     "deploy:frontend": "cd frontend && vercel --prod",
     "deploy:backend": "cd backend && railway up",
     "postinstall": "npm run install:frontend"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "vm2": "^3.9.19",
+    "express-rate-limit": "^6.10.0",
+    "helmet": "^7.0.0",
+    "express-validator": "^7.0.1"
   },
   "devDependencies": {
     "concurrently": "^8.2.1"
