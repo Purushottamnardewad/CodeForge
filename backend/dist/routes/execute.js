@@ -28,7 +28,7 @@ router.post('/:problemId', auth_1.authenticateToken, [
             return res.status(404).json({ message: 'Problem not found' });
         }
         // Execute code against test cases
-        const results = await (0, sandbox_1.executeCode)(code, problem.testCases);
+        const results = await (0, sandbox_1.executeCode)(code, problem.testCases, problem.title);
         // Calculate summary
         const totalCases = results.length;
         const passed = results.filter(r => r.passed).length;

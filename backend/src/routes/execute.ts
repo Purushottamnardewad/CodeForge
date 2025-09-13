@@ -28,7 +28,7 @@ router.post('/:problemId', authenticateToken, [
     }
 
     // Execute code against test cases
-    const results = await executeCode(code, problem.testCases);
+    const results = await executeCode(code, problem.testCases, problem.title);
 
     // Calculate summary
     const totalCases = results.length;
