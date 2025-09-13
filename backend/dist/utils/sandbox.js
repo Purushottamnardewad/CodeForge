@@ -44,44 +44,56 @@ problemTitle) => {
         // Try to find and call any available function
         let executed = false;
         
-        // First try common function names
-        const commonNames = [
-          'solution', 'solve', 'main', 
-          // Array problems
-          'twoSum', 'maxArea', 'trap', 'merge',
-          // String problems  
-          'lengthOfLongestSubstring', 'isPalindrome', 'isAnagram', 'groupAnagrams',
-          // Tree problems
-          'inorderTraversal', 'maxDepth',
-          // Math problems
-          'reverse', 'countPrimes', 'fizzBuzz', 'isPalindromeNumber',
-          // Stack problems
-          'isValid', 'validParentheses', 'dailyTemperatures',
-          // Bit manipulation
-          'singleNumber', 'hammingWeight',
-          // Dynamic Programming
-          'rob', 'climbStairs',
-          // Graph problems
-          'numIslands',
-          // Binary Search
-          'search', 'searchInsert', 'findMedianSortedArrays'
-        ];
-        for (const name of commonNames) {
-          if (typeof eval('typeof ' + name) === 'function') {
-            try {
-              result = eval(name + '(input)');
-              executed = true;
-              break;
-            } catch (e) {
-              // Try with parsed input if it's a string
-              if (typeof input === 'string') {
-                try {
-                  const parsedInput = JSON.parse(input);
-                  result = eval(name + '(parsedInput)');
-                  executed = true;
-                  break;
-                } catch (e2) {
-                  // Continue to next function
+        // Special handling for Two Sum problem which commonly uses two parameters
+        if (typeof eval('typeof twoSum') === 'function' && Array.isArray(input) && input.length === 2) {
+          try {
+            result = eval('twoSum(input[0], input[1])');
+            executed = true;
+          } catch (e) {
+            // Continue to other attempts
+          }
+        }
+        
+        // First try common function names with single parameter
+        if (!executed) {
+          const commonNames = [
+            'solution', 'solve', 'main', 
+            // Array problems
+            'twoSum', 'maxArea', 'trap', 'merge',
+            // String problems  
+            'lengthOfLongestSubstring', 'isPalindrome', 'isAnagram', 'groupAnagrams',
+            // Tree problems
+            'inorderTraversal', 'maxDepth',
+            // Math problems
+            'reverse', 'countPrimes', 'fizzBuzz', 'isPalindromeNumber',
+            // Stack problems
+            'isValid', 'validParentheses', 'dailyTemperatures',
+            // Bit manipulation
+            'singleNumber', 'hammingWeight',
+            // Dynamic Programming
+            'rob', 'climbStairs',
+            // Graph problems
+            'numIslands',
+            // Binary Search
+            'search', 'searchInsert', 'findMedianSortedArrays'
+          ];
+          for (const name of commonNames) {
+            if (typeof eval('typeof ' + name) === 'function') {
+              try {
+                result = eval(name + '(input)');
+                executed = true;
+                break;
+              } catch (e) {
+                // Try with parsed input if it's a string
+                if (typeof input === 'string') {
+                  try {
+                    const parsedInput = JSON.parse(input);
+                    result = eval(name + '(parsedInput)');
+                    executed = true;
+                    break;
+                  } catch (e2) {
+                    // Continue to next function
+                  }
                 }
               }
             }
@@ -158,7 +170,7 @@ function generateTestInput(title, testIndex, expectedOutput) {
     // Array Problems
     if (titleLower.includes('two sum')) {
         const testCases = [
-            [[2, 7, 11, 15], 9], // Expected: [0,1]
+            [[2, 7, 11, 15], 9], // Expected: [0,1] - traditional format for twoSum(nums, target)
             [[3, 2, 4], 6], // Expected: [1,2]
             [[3, 3], 6] // Expected: [0,1]
         ];
