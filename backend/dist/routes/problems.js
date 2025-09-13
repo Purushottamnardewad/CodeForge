@@ -12,7 +12,7 @@ const router = (0, express_1.Router)();
 router.get('/', async (req, res) => {
     try {
         const problems = await Problem_1.default.find()
-            .select('title difficulty category createdAt')
+            .select('title difficulty category description examples createdAt')
             .sort('-createdAt');
         res.json(problems);
     }

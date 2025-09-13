@@ -9,7 +9,7 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const problems = await Problem.find()
-      .select('title difficulty category createdAt')
+      .select('title difficulty category description examples createdAt')
       .sort('-createdAt');
     
     res.json(problems);
