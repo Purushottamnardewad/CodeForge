@@ -113,10 +113,14 @@ function ${funcName}(input) {
     setTestResults(null);
 
     try {
+      console.log('Attempting to execute code:', { id, code: code.substring(0, 100), language });
       const response = await axios.post(`/execute/${id}`, {
         code,
         language
-      });      setTestResults(response.data);
+      });
+      
+      console.log('Execution response:', response.data);
+      setTestResults(response.data);
       
       if (response.data.passed === response.data.totalCases) {
         toast.success('All test cases passed! 🎉');
@@ -124,8 +128,22 @@ function ${funcName}(input) {
         toast.error(`${response.data.passed}/${response.data.totalCases} test cases passed`);
       }
     } catch (error) {
-      console.error('Error running code:', error);
-      toast.error(error.response?.data?.message || 'Failed to execute code');
+      console.error('Error running code:', {
+        error,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: error.config
+      });
+      
+      if (error.response?.status === 401) {
+        toast.error('Please log in to execute code');
+      } else if (error.response?.status === 404) {
+        toast.error('Problem not found');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to execute code');
+      }
     } finally {
       setRunning(false);
     }
