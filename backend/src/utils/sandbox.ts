@@ -35,16 +35,68 @@ export const executeCode = async (
         const input = ${JSON.stringify(testCase.input)};
         let result;
         
-        // Try to find and call the main function
-        if (typeof solution === 'function') {
-          result = solution(input);
-        } else if (typeof twoSum === 'function') {
-          result = twoSum(input);
-        } else if (typeof main === 'function') {
-          result = main(input);
-        } else {
-          // If no function found, try to execute the code directly
-          result = eval(input);
+        // Get all function names from the user code
+        const functionNames = [];
+        const codeStr = \`${code}\`;
+        const functionRegex = /function\\s+([a-zA-Z_$][a-zA-Z0-9_$]*)/g;
+        let match;
+        while ((match = functionRegex.exec(codeStr)) !== null) {
+          functionNames.push(match[1]);
+        }
+        
+        // Try to find and call any available function
+        let executed = false;
+        
+        // First try common function names
+        const commonNames = ['solution', 'solve', 'main', 'twoSum', 'singleNumber'];
+        for (const name of commonNames) {
+          if (typeof eval('typeof ' + name) === 'function') {
+            try {
+              result = eval(name + '(input)');
+              executed = true;
+              break;
+            } catch (e) {
+              // Try with parsed input if it's a string
+              if (typeof input === 'string') {
+                try {
+                  const parsedInput = JSON.parse(input);
+                  result = eval(name + '(parsedInput)');
+                  executed = true;
+                  break;
+                } catch (e2) {
+                  // Continue to next function
+                }
+              }
+            }
+          }
+        }
+        
+        // If no common function worked, try discovered function names
+        if (!executed && functionNames.length > 0) {
+          for (const funcName of functionNames) {
+            try {
+              result = eval(funcName + '(input)');
+              executed = true;
+              break;
+            } catch (e) {
+              // Try with parsed input if it's a string
+              if (typeof input === 'string') {
+                try {
+                  const parsedInput = JSON.parse(input);
+                  result = eval(funcName + '(parsedInput)');
+                  executed = true;
+                  break;
+                } catch (e2) {
+                  // Continue to next function
+                }
+              }
+            }
+          }
+        }
+        
+        // If still no function worked, try to execute the code directly
+        if (!executed) {
+          result = eval('(' + input + ')');
         }
         
         // Convert result to string for comparison
