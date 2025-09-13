@@ -45,7 +45,7 @@ problemTitle) => {
         let executed = false;
         
         // First try common function names
-        const commonNames = ['solution', 'solve', 'main', 'twoSum', 'singleNumber'];
+        const commonNames = ['solution', 'solve', 'main', 'twoSum', 'singleNumber', 'isValid', 'validParentheses'];
         for (const name of commonNames) {
           if (typeof eval('typeof ' + name) === 'function') {
             try {
@@ -142,6 +142,16 @@ function generateTestInput(title, testIndex, expectedOutput) {
             case 1: return [4, 1, 2, 1, 2]; // Expected: 4  
             case 2: return [1]; // Expected: 1
             default: return [expectedOutput, 3, 3]; // Simple fallback
+        }
+    }
+    else if (titleLower.includes('valid parentheses')) {
+        // For Valid Parentheses problem
+        switch (testIndex) {
+            case 0: return "()"; // Expected: true
+            case 1: return "()[]{}"; // Expected: true
+            case 2: return "(]"; // Expected: false
+            case 3: return "([)]"; // Expected: false
+            default: return expectedOutput ? "()" : "(]"; // Simple fallback
         }
     }
     else if (titleLower.includes('two sum')) {
