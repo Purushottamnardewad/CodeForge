@@ -11,26 +11,32 @@ interface ExecutionResult {
 
 export const executeCode = async (
   code: string, 
-  testCases: any[], // Using any[] to handle current database format
+  testCases: any[], // Database test cases (not used, we'll generate our own)
   problemTitle?: string
 ): Promise<ExecutionResult[]> => {
   const results: ExecutionResult[] = [];
+  
+  // Get problem-specific test cases
+  const actualTestCases = getProblemTestCases(problemTitle || '');
+  
+  if (actualTestCases.length === 0) {
+    // Fallback for unknown problems
+    results.push({
+      input: 'Unknown problem',
+      expected: 'N/A',
+      got: '',
+      passed: false,
+      error: 'No test cases available for this problem'
+    });
+    return results;
+  }
 
-  for (let i = 0; i < testCases.length; i++) {
-    const testCase = testCases[i];
+  for (let i = 0; i < actualTestCases.length; i++) {
+    const testCase = actualTestCases[i];
     try {
-      // Handle current database format where input is missing and output is used instead of expectedOutput
-      let input = testCase.input;
-      const expectedOutput = testCase.expectedOutput || testCase.output;
-      
-      // Generate test input based on problem if missing
-      if (!input) {
-        input = generateTestInput(problemTitle || '', i, expectedOutput);
-      }
-
       // Create isolated VM with timeout
       const vm = new VM({
-        timeout: 2000, // 2 second timeout
+        timeout: 3000, // 3 second timeout
         sandbox: {
           console: {
             log: () => {}, // Disable console.log in sandbox
@@ -43,7 +49,7 @@ export const executeCode = async (
         ${code}
         
         // Parse input and call solution function
-        const input = ${JSON.stringify(input)};
+        const input = ${JSON.stringify(testCase.input)};
         let result;
         
         // Get all function names from the user code
@@ -58,39 +64,24 @@ export const executeCode = async (
         // Try to find and call any available function
         let executed = false;
         
-        // Special handling for Two Sum problem which commonly uses two parameters
-        if (typeof eval('typeof twoSum') === 'function' && Array.isArray(input) && input.length === 2) {
-          try {
-            result = eval('twoSum(input[0], input[1])');
-            executed = true;
-          } catch (e) {
-            // Continue to other attempts
-          }
-        }
+        // Special handling for different problem types
+        ${getSpecialHandlingCode(problemTitle || '')}
         
-        // First try common function names with single parameter
+        // If no special handling worked, try common function names
         if (!executed) {
           const commonNames = [
             'solution', 'solve', 'main', 
-            // Array problems
             'twoSum', 'maxArea', 'trap', 'merge',
-            // String problems  
             'lengthOfLongestSubstring', 'isPalindrome', 'isAnagram', 'groupAnagrams',
-            // Tree problems
             'inorderTraversal', 'maxDepth',
-            // Math problems
             'reverse', 'countPrimes', 'fizzBuzz', 'isPalindromeNumber',
-            // Stack problems
             'isValid', 'validParentheses', 'dailyTemperatures',
-            // Bit manipulation
             'singleNumber', 'hammingWeight',
-            // Dynamic Programming
             'rob', 'climbStairs',
-            // Graph problems
             'numIslands',
-            // Binary Search
             'search', 'searchInsert', 'findMedianSortedArrays'
           ];
+          
           for (const name of commonNames) {
             if (typeof eval('typeof ' + name) === 'function') {
               try {
@@ -98,17 +89,7 @@ export const executeCode = async (
                 executed = true;
                 break;
               } catch (e) {
-                // Try with parsed input if it's a string
-                if (typeof input === 'string') {
-                  try {
-                    const parsedInput = JSON.parse(input);
-                    result = eval(name + '(parsedInput)');
-                    executed = true;
-                    break;
-                  } catch (e2) {
-                    // Continue to next function
-                  }
-                }
+                // Continue to next function
               }
             }
           }
@@ -122,24 +103,9 @@ export const executeCode = async (
               executed = true;
               break;
             } catch (e) {
-              // Try with parsed input if it's a string
-              if (typeof input === 'string') {
-                try {
-                  const parsedInput = JSON.parse(input);
-                  result = eval(funcName + '(parsedInput)');
-                  executed = true;
-                  break;
-                } catch (e2) {
-                  // Continue to next function
-                }
-              }
+              // Continue to next function
             }
           }
-        }
-        
-        // If still no function worked, try to execute the code directly
-        if (!executed) {
-          result = eval('(' + input + ')');
         }
         
         // Convert result to string for comparison
@@ -157,11 +123,11 @@ export const executeCode = async (
       const outputStr = String(output);
       
       // Compare with expected output
-      const expectedStr = String(expectedOutput);
+      const expectedStr = String(testCase.expected);
       const passed = outputStr.trim() === expectedStr.trim();
 
       results.push({
-        input: String(input),
+        input: typeof testCase.input === 'object' ? JSON.stringify(testCase.input) : String(testCase.input),
         expected: expectedStr,
         got: outputStr,
         passed
@@ -169,8 +135,8 @@ export const executeCode = async (
     } catch (error: any) {
       // Handle execution errors
       results.push({
-        input: String(testCase.input || 'N/A'),
-        expected: String(testCase.expectedOutput || testCase.output || 'N/A'),
+        input: typeof testCase.input === 'object' ? JSON.stringify(testCase.input) : String(testCase.input),
+        expected: String(testCase.expected),
         got: '',
         passed: false,
         error: error.message || 'Runtime error'
@@ -181,253 +147,317 @@ export const executeCode = async (
   return results;
 };
 
-// Generate test input based on problem title and expected output
-function generateTestInput(title: string, testIndex: number, expectedOutput: any): any {
+// Get problem-specific test cases
+function getProblemTestCases(title: string): Array<{input: any, expected: any}> {
   const titleLower = title.toLowerCase();
   
-  // Array Problems
+  // Two Sum
   if (titleLower.includes('two sum')) {
-    const testCases = [
-      [[2, 7, 11, 15], 9],  // Expected: [0,1] - traditional format for twoSum(nums, target)
-      [[3, 2, 4], 6],       // Expected: [1,2]
-      [[3, 3], 6]           // Expected: [0,1]
+    return [
+      { input: [[2, 7, 11, 15], 9], expected: '[0,1]' },
+      { input: [[3, 2, 4], 6], expected: '[1,2]' },
+      { input: [[3, 3], 6], expected: '[0,1]' }
     ];
-    return testCases[testIndex] || testCases[0];
   }
   
-  if (titleLower.includes('container') && titleLower.includes('water')) {
-    const testCases = [
-      [1,8,6,2,5,4,8,3,7],  // Expected: 49
-      [1,1],                // Expected: 1
-      [4,3,2,1,4]          // Expected: 16
+  // Valid Parentheses
+  if (titleLower.includes('valid parentheses')) {
+    return [
+      { input: "()", expected: 'true' },
+      { input: "()[]{}",  expected: 'true' },
+      { input: "(]", expected: 'false' },
+      { input: "([)]", expected: 'false' }
     ];
-    return testCases[testIndex] || testCases[0];
   }
   
+  // Single Number
+  if (titleLower.includes('single number')) {
+    return [
+      { input: [2, 2, 1], expected: '1' },
+      { input: [4, 1, 2, 1, 2], expected: '4' },
+      { input: [1], expected: '1' }
+    ];
+  }
+  
+  // House Robber
+  if (titleLower.includes('house robber')) {
+    return [
+      { input: [1, 2, 3, 1], expected: '4' },
+      { input: [2, 7, 9, 3, 1], expected: '12' },
+      { input: [2, 1, 1, 2], expected: '4' }
+    ];
+  }
+  
+  // Binary Tree Inorder Traversal
+  if (titleLower.includes('binary tree inorder traversal')) {
+    return [
+      { input: [1, null, 2, 3], expected: '[1,3,2]' },
+      { input: [], expected: '[]' },
+      { input: [1], expected: '[1]' }
+    ];
+  }
+  
+  // Daily Temperatures
+  if (titleLower.includes('daily temperatures')) {
+    return [
+      { input: [73,74,75,71,69,72,76,73], expected: '[1,1,4,2,1,1,0,0]' },
+      { input: [30,40,50,60], expected: '[1,1,1,0]' },
+      { input: [30,60,90], expected: '[1,1,0]' }
+    ];
+  }
+  
+  // Number of Islands
+  if (titleLower.includes('number of islands')) {
+    return [
+      { 
+        input: [["1","1","1","1","0"],["1","1","0","1","0"],["1","1","0","0","0"],["0","0","0","0","0"]], 
+        expected: '1' 
+      },
+      { 
+        input: [["1","1","0","0","0"],["1","1","0","0","0"],["0","0","1","0","0"],["0","0","0","1","1"]], 
+        expected: '3' 
+      }
+    ];
+  }
+  
+  // Climbing Stairs
+  if (titleLower.includes('climbing stairs')) {
+    return [
+      { input: 2, expected: '2' },
+      { input: 3, expected: '3' },
+      { input: 4, expected: '5' }
+    ];
+  }
+  
+  // Maximum Depth of Binary Tree
+  if (titleLower.includes('maximum depth') && titleLower.includes('binary tree')) {
+    return [
+      { input: [3,9,20,null,null,15,7], expected: '3' },
+      { input: [1,null,2], expected: '2' },
+      { input: [], expected: '0' }
+    ];
+  }
+  
+  // Number of 1 Bits
+  if (titleLower.includes('number of 1 bits') || titleLower.includes('hamming weight')) {
+    return [
+      { input: 11, expected: '3' },
+      { input: 128, expected: '1' },
+      { input: 4294967293, expected: '31' }
+    ];
+  }
+  
+  // Search Insert Position
+  if (titleLower.includes('search insert position')) {
+    return [
+      { input: [[1,3,5,6], 5], expected: '2' },
+      { input: [[1,3,5,6], 2], expected: '1' },
+      { input: [[1,3,5,6], 7], expected: '4' }
+    ];
+  }
+  
+  // Longest Substring Without Repeating Characters
+  if (titleLower.includes('longest substring') && titleLower.includes('repeating')) {
+    return [
+      { input: "abcabcbb", expected: '3' },
+      { input: "bbbbb", expected: '1' },
+      { input: "pwwkew", expected: '3' }
+    ];
+  }
+  
+  // Reverse Integer
+  if (titleLower.includes('reverse integer')) {
+    return [
+      { input: 123, expected: '321' },
+      { input: -123, expected: '-321' },
+      { input: 120, expected: '21' }
+    ];
+  }
+  
+  // Count Primes
+  if (titleLower.includes('count primes')) {
+    return [
+      { input: 10, expected: '4' },
+      { input: 0, expected: '0' },
+      { input: 1, expected: '0' }
+    ];
+  }
+  
+  // Median of Two Sorted Arrays
+  if (titleLower.includes('median') && titleLower.includes('sorted arrays')) {
+    return [
+      { input: [[1,3], [2]], expected: '2' },
+      { input: [[1,2], [3,4]], expected: '2.5' },
+      { input: [[0,0], [0,0]], expected: '0' }
+    ];
+  }
+  
+  // Group Anagrams
+  if (titleLower.includes('group anagrams')) {
+    return [
+      { input: ["eat","tea","tan","ate","nat","bat"], expected: '[["bat"],["nat","tan"],["ate","eat","tea"]]' },
+      { input: [""], expected: '[[""]]' },
+      { input: ["a"], expected: '[["a"]]' }
+    ];
+  }
+  
+  // Binary Search
+  if (titleLower === 'binary search') {
+    return [
+      { input: [[-1,0,3,5,9,12], 9], expected: '4' },
+      { input: [[-1,0,3,5,9,12], 2], expected: '-1' },
+      { input: [[5], 5], expected: '0' }
+    ];
+  }
+  
+  // Valid Anagram
+  if (titleLower.includes('valid anagram')) {
+    return [
+      { input: ["anagram", "nagaram"], expected: 'true' },
+      { input: ["rat", "car"], expected: 'false' },
+      { input: ["listen", "silent"], expected: 'true' }
+    ];
+  }
+  
+  // FizzBuzz
+  if (titleLower.includes('fizzbuzz')) {
+    return [
+      { input: 3, expected: '["1","2","Fizz"]' },
+      { input: 5, expected: '["1","2","Fizz","4","Buzz"]' },
+      { input: 15, expected: '["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]' }
+    ];
+  }
+  
+  // Valid Palindrome
+  if (titleLower.includes('valid palindrome')) {
+    return [
+      { input: "A man, a plan, a canal: Panama", expected: 'true' },
+      { input: "race a car", expected: 'false' },
+      { input: " ", expected: 'true' }
+    ];
+  }
+  
+  // Merge Sorted Array
+  if (titleLower.includes('merge sorted array')) {
+    return [
+      { input: [[1,2,3,0,0,0], 3, [2,5,6], 3], expected: '[1,2,2,3,5,6]' },
+      { input: [[1], 1, [], 0], expected: '[1]' },
+      { input: [[0], 0, [1], 1], expected: '[1]' }
+    ];
+  }
+  
+  // Trapping Rain Water
   if (titleLower.includes('trapping rain water')) {
-    const testCases = [
-      [0,1,0,2,1,0,1,3,2,1,2,1],  // Expected: 6
-      [4,2,0,3,2,5],              // Expected: 9
-      [3,0,2,0,4]                 // Expected: 7
+    return [
+      { input: [0,1,0,2,1,0,1,3,2,1,2,1], expected: '6' },
+      { input: [4,2,0,3,2,5], expected: '9' },
+      { input: [3,0,2,0,4], expected: '7' }
     ];
-    return testCases[testIndex] || testCases[0];
+  }
+  
+  // Palindrome Number
+  if (titleLower.includes('palindrome number')) {
+    return [
+      { input: 121, expected: 'true' },
+      { input: -121, expected: 'false' },
+      { input: 10, expected: 'false' }
+    ];
+  }
+  
+  // Container With Most Water
+  if (titleLower.includes('container') && titleLower.includes('water')) {
+    return [
+      { input: [1,8,6,2,5,4,8,3,7], expected: '49' },
+      { input: [1,1], expected: '1' },
+      { input: [4,3,2,1,4], expected: '16' }
+    ];
+  }
+  
+  // Default fallback
+  return [
+    { input: 'test', expected: 'test' }
+  ];
+}
+
+// Get special handling code for specific problems
+function getSpecialHandlingCode(title: string): string {
+  const titleLower = title.toLowerCase();
+  
+  if (titleLower.includes('two sum')) {
+    return `
+      // Special handling for Two Sum with two parameters
+      if (typeof eval('typeof twoSum') === 'function' && Array.isArray(input) && input.length === 2) {
+        try {
+          result = eval('twoSum(input[0], input[1])');
+          executed = true;
+        } catch (e) {
+          // Continue to other attempts
+        }
+      }
+    `;
   }
   
   if (titleLower.includes('merge sorted array')) {
-    const testCases = [
-      [[1,2,3,0,0,0], 3, [2,5,6], 3],  // Expected: [1,2,2,3,5,6]
-      [[1], 1, [], 0],                 // Expected: [1]
-      [[0], 0, [1], 1]                 // Expected: [1]
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // String Problems
-  if (titleLower.includes('longest substring') && titleLower.includes('repeating')) {
-    const testCases = [
-      "abcabcbb",    // Expected: 3
-      "bbbbb",       // Expected: 1
-      "pwwkew"       // Expected: 3
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('valid palindrome')) {
-    const testCases = [
-      "A man, a plan, a canal: Panama",  // Expected: true
-      "race a car",                      // Expected: false
-      " "                                // Expected: true
-    ];
-    return testCases[testIndex] || testCases[0];
+    return `
+      // Special handling for merge function with 4 parameters
+      if (typeof eval('typeof merge') === 'function' && Array.isArray(input) && input.length === 4) {
+        try {
+          result = eval('merge(input[0], input[1], input[2], input[3])');
+          executed = true;
+        } catch (e) {
+          // Continue to other attempts  
+        }
+      }
+    `;
   }
   
   if (titleLower.includes('valid anagram')) {
-    const testCases = [
-      ["anagram", "nagaram"],  // Expected: true
-      ["rat", "car"],          // Expected: false
-      ["listen", "silent"]     // Expected: true
-    ];
-    return testCases[testIndex] || testCases[0];
+    return `
+      // Special handling for isAnagram with two parameters
+      if (typeof eval('typeof isAnagram') === 'function' && Array.isArray(input) && input.length === 2) {
+        try {
+          result = eval('isAnagram(input[0], input[1])');
+          executed = true;
+        } catch (e) {
+          // Continue to other attempts
+        }
+      }
+    `;
   }
   
-  if (titleLower.includes('group anagrams')) {
-    const testCases = [
-      ["eat","tea","tan","ate","nat","bat"],  // Expected: [["bat"],["nat","tan"],["ate","eat","tea"]]
-      [""],                                   // Expected: [[""]]
-      ["a"]                                   // Expected: [["a"]]
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Math Problems
-  if (titleLower.includes('reverse integer')) {
-    const testCases = [
-      123,    // Expected: 321
-      -123,   // Expected: -321
-      120     // Expected: 21
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('palindrome number')) {
-    const testCases = [
-      121,   // Expected: true
-      -121,  // Expected: false
-      10     // Expected: false
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('count primes')) {
-    const testCases = [
-      10,  // Expected: 4
-      0,   // Expected: 0
-      1    // Expected: 0
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('fizzbuzz')) {
-    const testCases = [
-      3,   // Expected: ["1","2","Fizz"]
-      5,   // Expected: ["1","2","Fizz","4","Buzz"]
-      15   // Expected: ["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Stack Problems
-  if (titleLower.includes('valid parentheses')) {
-    const testCases = [
-      "()",       // Expected: true
-      "()[]{}",   // Expected: true
-      "(]",       // Expected: false
-      "([)]"      // Expected: false
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('daily temperatures')) {
-    const testCases = [
-      [73,74,75,71,69,72,76,73],  // Expected: [1,1,4,2,1,1,0,0]
-      [30,40,50,60],              // Expected: [1,1,1,0]
-      [30,60,90]                  // Expected: [1,1,0]
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Bit Manipulation Problems
-  if (titleLower.includes('single number')) {
-    const testCases = [
-      [2,2,1],        // Expected: 1
-      [4,1,2,1,2],    // Expected: 4
-      [1]             // Expected: 1
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('number of 1 bits') || titleLower.includes('hamming weight')) {
-    const testCases = [
-      0b00000000000000000000000000001011,  // Expected: 3
-      0b00000000000000000000000010000000,  // Expected: 1
-      0b11111111111111111111111111111101   // Expected: 31
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Dynamic Programming Problems
-  if (titleLower.includes('house robber')) {
-    const testCases = [
-      [1,2,3,1],      // Expected: 4
-      [2,7,9,3,1],    // Expected: 12
-      [2,1,1,2]       // Expected: 4
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('climbing stairs')) {
-    const testCases = [
-      2,  // Expected: 2
-      3,  // Expected: 3
-      4   // Expected: 5
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Graph Problems
-  if (titleLower.includes('number of islands')) {
-    const testCases = [
-      [
-        ["1","1","1","1","0"],
-        ["1","1","0","1","0"],
-        ["1","1","0","0","0"],
-        ["0","0","0","0","0"]
-      ],  // Expected: 1
-      [
-        ["1","1","0","0","0"],
-        ["1","1","0","0","0"],
-        ["0","0","1","0","0"],
-        ["0","0","0","1","1"]
-      ],  // Expected: 3
-      [
-        ["1","0","1","0","1"],
-        ["0","1","0","1","0"],
-        ["1","0","1","0","1"]
-      ]   // Expected: 6
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Tree Problems
-  if (titleLower.includes('binary tree inorder traversal')) {
-    // For tree problems, we'll use a simplified representation
-    const testCases = [
-      [1,null,2,3],    // Expected: [1,3,2]
-      [],              // Expected: []
-      [1]              // Expected: [1]
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('maximum depth') && titleLower.includes('binary tree')) {
-    const testCases = [
-      [3,9,20,null,null,15,7],  // Expected: 3
-      [1,null,2],               // Expected: 2
-      []                        // Expected: 0
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  // Binary Search Problems
-  if (titleLower === 'binary search') {
-    const testCases = [
-      [[-1,0,3,5,9,12], 9],   // Expected: 4
-      [[-1,0,3,5,9,12], 2],   // Expected: -1
-      [[5], 5]                // Expected: 0
-    ];
-    return testCases[testIndex] || testCases[0];
-  }
-  
-  if (titleLower.includes('search insert position')) {
-    const testCases = [
-      [[1,3,5,6], 5],  // Expected: 2
-      [[1,3,5,6], 2],  // Expected: 1
-      [[1,3,5,6], 7]   // Expected: 4
-    ];
-    return testCases[testIndex] || testCases[0];
+  if (titleLower.includes('binary search') || titleLower.includes('search insert')) {
+    return `
+      // Special handling for search functions with two parameters  
+      if ((typeof eval('typeof search') === 'function' || typeof eval('typeof searchInsert') === 'function') && Array.isArray(input) && input.length === 2) {
+        try {
+          if (typeof eval('typeof search') === 'function') {
+            result = eval('search(input[0], input[1])');
+          } else {
+            result = eval('searchInsert(input[0], input[1])');
+          }
+          executed = true;
+        } catch (e) {
+          // Continue to other attempts
+        }
+      }
+    `;
   }
   
   if (titleLower.includes('median') && titleLower.includes('sorted arrays')) {
-    const testCases = [
-      [[1,3], [2]],       // Expected: 2.0
-      [[1,2], [3,4]],     // Expected: 2.5
-      [[0,0], [0,0]]      // Expected: 0.0
-    ];
-    return testCases[testIndex] || testCases[0];
+    return `
+      // Special handling for findMedianSortedArrays with two parameters
+      if (typeof eval('typeof findMedianSortedArrays') === 'function' && Array.isArray(input) && input.length === 2) {
+        try {
+          result = eval('findMedianSortedArrays(input[0], input[1])');
+          executed = true;
+        } catch (e) {
+          // Continue to other attempts
+        }
+      }
+    `;
   }
   
-  // Generic fallback based on expected output
-  return expectedOutput;
+  return '// No special handling needed';
 }
 
 // Alternative implementation using child_process (more secure but requires setup)
