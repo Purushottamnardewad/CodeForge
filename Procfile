@@ -1,1 +1,1 @@
-web: cd backend && npm install --only=production && npm start
+web: ./start.sh
